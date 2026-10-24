@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ネットのお金を守る診断</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap">
+<style>
+:root{--bg:#F3F5F8;--card:#fff;--ink:#0F1B2D;--mute:#586577;--line:#D6DCE5;--ok:#0A7C72;--ng:#C7372F;--warn:#A85A0B;--btn:#0F1B2D;--btnink:#fff;--soft:#E8ECF2;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C131E;--card:#152031;--ink:#EAF0F8;--mute:#9AA8BB;--line:#2A3950;--ok:#3CC3B4;--ng:#FF7A70;--warn:#F0A04B;--btn:#EAF0F8;--btnink:#0C131E;--soft:#1D2B41;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C131E;--card:#152031;--ink:#EAF0F8;--mute:#9AA8BB;--line:#2A3950;--ok:#3CC3B4;--ng:#FF7A70;--warn:#F0A04B;--btn:#EAF0F8;--btnink:#0C131E;--soft:#1D2B41;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;line-height:1.7}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.35rem;font-weight:900;margin:8px 0 6px;line-height:1.4}
+.lead{color:var(--mute);margin:0 0 20px;font-size:.95rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 18px}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--soft);color:var(--mute);margin-bottom:10px}
+.tag.hi{background:var(--ng);color:#fff}.tag.mid{background:var(--warn);color:#fff}
+.q{font-size:1.2rem;font-weight:700;margin:0 0 8px;line-height:1.6}
+.hint{color:var(--mute);font-size:.9rem;margin:0 0 18px}
+.btns{display:grid;gap:10px}
+button{font:inherit;cursor:pointer;border-radius:10px;padding:14px;border:1.5px solid var(--btn);background:var(--btn);color:var(--btnink);font-weight:700;font-size:1rem}
+button.alt{background:transparent;color:var(--ink);border-color:var(--line)}
+button.link{border:0;background:none;color:var(--mute);font-weight:400;padding:10px 0;text-decoration:underline;font-size:.9rem}
+button:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
+.trail{display:flex;flex-wrap:wrap;gap:6px;margin:16px 2px 0}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dot.y{background:var(--ink)}.dot.g{background:var(--ok)}.dot.r{background:var(--ng)}.dot.now{outline:2px solid var(--ink);outline-offset:2px}
+.score{font-size:1.1rem;font-weight:900;margin:0 0 4px}
+.sec{margin:22px 0 8px;font-weight:900;font-size:1rem;display:flex;align-items:center;gap:8px}
+.sec i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.act{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.act b{display:block;margin-bottom:2px}.act span{color:var(--mute);font-size:.9rem}
+.note{color:var(--mute);font-size:.82rem;margin-top:22px}
+</style>
+</head>
+<body>
+<main>
+<h1>ネットのお金を守る診断</h1>
+<p class="lead">はい・いいえで答えるだけ。危険度の高いものから順にたどり、いま足りない対策を優先順に出します。</p>
+<div id="app"></div>
+<div class="trail" id="trail" aria-hidden="true"></div>
+<p class="note">「わからない」は「いいえ」として扱います。回答は端末内だけで処理され、送信されません。</p>
+</main>
+<script>
+const Q=[
+{id:"e1",e:1,r:"hi",t:"ネット証券・暗号資産・FXの口座を持っている",h:"直近の不正出金で最も狙われているのがここです。"},
+{id:"e2",e:1,r:"hi",t:"ネットバンキング（銀行アプリを含む）を使っている",h:"振込・ATM出金・ペイジーなどがネットから動かせる状態です。"},
+{id:"e3",e:1,r:"mid",t:"クレジットカードを、ネット通販やスマホ決済に登録している",h:"カード番号が複数の場所に残っている状態です。"},
+{id:"e4",e:1,r:"mid",t:"QR決済・電子マネー・ポイントにチャージして使っている",h:"残高も、実質的にはお金です。"},
+{id:"d1",t:"メールアカウントを、パスキーか認証アプリで守っている",h:"パスワード再設定の連絡がすべて届く場所です。ここが破られると連鎖します。",a:{p:1,t:"メールにパスキーか認証アプリを設定",d:"Gmail・iCloud・Outlookなどのセキュリティ設定から。SMSだけの認証は避けます。"}},
+{id:"d3",when:a=>a.e1=="y"||a.e2=="y",t:"金融サービスのログインを、パスキーか認証アプリにしている（SMSだけではない）",h:"",a:{p:1,t:"ログインをパスキーか認証アプリに切り替え",d:"各サービスの「セキュリティ」「ログイン設定」から。SMSは偽サイトに入力させられる被害が多い方法です。"}},
+{id:"d4",when:a=>a.e1=="y",t:"証券・暗号資産の出金先口座を最近確認し、見覚えのない登録はない",h:"口座を乗っ取られると、出金先を書き換えて現金化されます。",a:{p:1,t:"出金先口座の登録を今すぐ確認",d:"見覚えのないものは即削除。出金先の変更時に通知や追加認証が出る設定があれば、オンにします。"}},
+{id:"d5",when:a=>a.e1=="y"||a.e2=="y"||a.e3=="y",t:"ログイン・出金・送金・カード利用の通知を、すべてオンにしている",h:"",a:{p:1,t:"通知をすべてオン",d:"各アプリの通知設定とメール通知を確認。被害に最速で気づける手段です。設定が見つからなければサポートへ。"}},
+{id:"d2",t:"金融サービスごとに、別々のパスワードを使っている",h:"",a:{p:1,t:"パスワードの使い回しをやめる",d:"パスワード管理機能（iPhoneのパスワード、Googleパスワードマネージャーなど）で、長いランダムなものに。まず金融系から。"}},
+{id:"d8",t:"メールやSMSのリンクからはログインせず、公式アプリかブックマークから入っている",h:"",a:{p:1,t:"ログインは公式アプリかブックマークからだけにする",d:"「本人確認」「利用停止」など急がせる連絡は偽物を疑い、リンクは開きません。"}},
+{id:"d6",when:a=>a.e2=="y",t:"振込・ATM出金の1日限度額を、普段使う額まで下げている",h:"",a:{p:2,t:"振込・ATM出金の限度額を引き下げ",d:"銀行アプリで即変更できることが多いです。必要なときだけ一時的に上げれば足ります。"}},
+{id:"d7",when:a=>a.e3=="y",t:"ネットで使うカードは限度額を低めにし、3Dセキュアをオンにしている",h:"",a:{p:2,t:"ネット用カードを分け、3Dセキュアを有効化",d:"バーチャルカードや限度額の低い専用カードを作り、メインのカードはネットに登録しません。"}},
+{id:"d9",when:a=>a.e4=="y",t:"チャージ上限を決め、残高は少なめで、自動チャージはオフにしている",h:"",a:{p:2,t:"チャージ額と自動チャージを見直す",d:"銀行口座・カードとの連携設定を確認し、使う分だけチャージする形にします。"}},
+{id:"d11",t:"携帯キャリアの暗証番号を推測されにくくし、SIMロックなどを設定している",h:"",a:{p:2,t:"携帯キャリアの暗証番号とロックを強化",d:"My docomo・au・SoftBankなどの設定から。回線の乗っ取りを防ぎます。"}},
+{id:"d10",t:"使っていない口座・アプリ・サービスは解約して整理している",h:"",a:{p:3,t:"使っていない口座とサービスを解約",d:"持っているだけで流出元にも、乗っ取りの入口にもなります。"}}
+];
+const ATM=[
+{p:1,t:"暗証番号を、誕生日・電話番号以外にする",d:"キャッシュカードの暗証番号は、推測されにくい4桁に変更します。"},
+{p:1,t:"「銀行・警察・役所」を名乗る電話は切り、自分からかけ直す",d:"カードや暗証番号を聞く、預かる、取りに来るのはすべて詐欺です。"},
+{p:2,t:"ATMの1日の引き出し上限を下げる",d:"窓口やATMで変更できます。"},
+{p:2,t:"「口座停止」を知らせるメールやSMSのリンクは開かない",d:"届いたら、銀行の公式サイトか窓口で確かめます。"},
+{p:3,t:"ネット銀行や証券を始めるときは、先にメールにパスキーを設定する",d:"順番を守るだけで、最初の被害の入口をふさげます。"}
+];
+const $=s=>document.querySelector(s);
+let ans={},idx=0,hist=[];
+const on=q=>!q.when||q.when(ans);
+function nextIdx(from){
+ if(from===3&&!Q.slice(0,4).some(q=>ans[q.id]=="y"))return -1;
+ for(let i=from+1;i<Q.length;i++)if(on(Q[i]))return i;return -1;
+}
+function trail(cur){
+ const el=$("#trail");el.innerHTML="";
+ hist.concat(cur>=0?[cur]:[]).forEach((i,k)=>{
+  const q=Q[i],d=document.createElement("span"),v=ans[q.id];
+  d.className="dot "+(i===cur&&hist.length<=k?"now":"")+" "+(v===undefined?"":q.e?(v=="y"?"y":""):(v=="y"?"g":"r"));
+  el.appendChild(d);
+ });
+}
+function render(){
+ if(idx<0)return result();
+ const q=Q[idx],app=$("#app");
+ app.innerHTML=`<div class="card"><span class="tag ${q.e?q.r:""}">${q.e?"あなたの状況・リスク"+(q.r=="hi"?"高":"中"):"対策チェック"}</span>
+ <p class="q">${q.t}</p>${q.h?`<p class="hint">${q.h}</p>`:`<p class="hint"></p>`}
+ <div class="btns"><button data-v="y">はい</button><button class="alt" data-v="n">いいえ</button><button class="link" data-v="u">わからない</button></div>
+ ${hist.length?'<button class="link" id="back">ひとつ戻る</button>':""}</div>`;
+ app.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{ans[q.id]=b.dataset.v;hist.push(idx);idx=nextIdx(idx);render()});
+ const bk=$("#back");if(bk)bk.onclick=()=>{idx=hist.pop();render()};
+ trail(idx);
+}
+function result(){
+ const app=$("#app"),exp=Q.slice(0,4).some(q=>ans[q.id]=="y");
+ let acts,msg,sub;
+ if(!exp){
+  acts=ATM;msg="ネット被害のリスクは低め";sub="窓口やATM中心なら、狙われやすいのは電話・訪問・偽メールです。次の対策だけ押さえてください。";
+ }else{
+  const ds=Q.filter(q=>q.a&&on(q)&&ans[q.id]!==undefined),ok=ds.filter(q=>ans[q.id]=="y").length;
+  acts=ds.filter(q=>ans[q.id]!="y").map(q=>q.a);
+  const r=ok/ds.length;
+  msg=`対策できている項目：${ok} / ${ds.length}`;
+  sub=!acts.length?"主要な対策はそろっています。ときどき設定を見直してください。":r>=.7?"基本は固まっています。残りの項目を埋めましょう。":"いくつか急ぎの手当てが必要です。上から順に進めてください。";
+ }
+ const grp=[[1,"今日やる","var(--ng)"],[2,"今週中にやる","var(--warn)"],[3,"余裕があればやる","var(--ok)"]];
+ let h=`<div class="card"><p class="score">${msg}</p><p class="hint" style="margin:0">${sub}</p></div>`;
+ grp.forEach(([p,l,c])=>{const L=acts.filter(a=>a.p==p);if(L.length)h+=`<div class="sec"><i style="background:${c}"></i>${l}</div>`+L.map(a=>`<div class="act" style="--c:${c}"><b>${a.t}</b><span>${a.d}</span></div>`).join("")});
+ h+=`<div class="btns" style="margin-top:20px"><button id="again">もう一度診断する</button></div>`;
+ app.innerHTML=h;$("#again").onclick=()=>{ans={};hist=[];idx=0;render()};
+ trail(-1);
+}
+render();
+</script>
+</body>
+</html>
